@@ -1,12 +1,15 @@
-
 /*eslint-disable */
 
 /// <reference types="cypress" />
 
 describe('página inicial', () => {
+    let authToken;
+    let saldo;
+
     beforeEach(() => {
         cy.visit('/')
     })
+
 
     it('deve permitir que o usuário acesse a aplicação, realize uma transação e faça um logout', () => {
         cy.login('neilton@alura.com', '123456')
@@ -17,6 +20,39 @@ describe('página inicial', () => {
         cy.getByData('lista-transacoes').find('li').last().contains('- R$ 100')
         cy.getByData('botao-sair').click()
         cy.location('pathname').should('eq', '/')
+    })
+
+    it('Deve retornar token de autenticação da api utilizando o cy.request', () => {
+        cy.request({
+            method: 'POST',
+            url: 'http://localhost:8000/public/login',
+            body: {
+                email: 'neilton@alura.com',
+                senha: '123456'
+            }
+        }).then((response) => {
+            authToken = response.body.access_token
+            expect(authToken).to.not.be.null
+            expect(response.status).to.eq(200)
+        })
+    })
+
+    it('Deve retornar token de autenticação da api utilizando o cy.request', () => {
+        cy.request({
+            method: 'GET',
+            url: 'http://localhost:8000/saldo',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: {
+                email: 'neilton@alura.com',
+                senha: '123456'
+            }
+        }).then((response) => {
+            expect(response.body).to.not.be.null
+            expect(response.status).to.eq(200)
+            saldo = response.body
+        })
     })
 
     it('deve permitir que o usuário acesse a aplicação, realize um depósito e faça um logout', () => {
